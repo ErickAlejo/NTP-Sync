@@ -120,7 +120,7 @@ class RouterMikrotik():
                     print(Fore.RED + Style.BRIGHT + f"Version Unknown: {current_firmware}  IP: {device['host']}")
 
         except Exception as e:
-            print(Fore.RED + Style.BRIGHT + f"Error on IP: {device['host']}  Version:{current_firmware}")
+            print(Fore.RED + Style.BRIGHT + f"Error on IP: {device['host']}")
 
 
 jsonfile = HandleFiles.open_json_files('./templates/ntp-reconfig.template.json')
