@@ -1,81 +1,129 @@
-from netmiko import ConnectHandler
+import os
 import re
-
-# Read IPs Files
-with open("hosts.txt", "r") as hosts:
-    host = []
-    for a in hosts:
-        a = a.strip() # Remover /n
-        host.append(a)
-host = host
-
-# Create Object to connect with Netmiko
-devices =[{
-    'device_type': 'mikrotik_routeros',
-    'host': ips,
-    'username': 'admin',
-    'password': 'admin'
-    }
-    for ips in host
-]
-
-# Commands to Execute in routers depend it V6 & V7
-templates = {
-    "check" : ['system routerboard print'
-               ],
-     'V6':{
-        "post_config" :["/system ntp client set primary-ntp=X.X.X.X secondary-ntp=X.X.X.X ", #  <-- Change by your Server IP Adress
-                        "/system clock set time-zone-name=America/Bogota"
-                        ],
-    },    
-    'V7':{
-        "clean_config" :["/system/ntp/client/servers remove [find]",
-                        "/system clock set time-zone-name=America/Bogota"
-                        ],
-        "post_config" : [
-                        "/system ntp client set enabled=yes",
-                        "/system ntp client servers add address=X.X.X.X", # <-- Change by your Server IP Adress
-                        "/system ntp client servers add address=X.X.X.X." # <-- Change by your Server IP Adress
-                        ]
-    }
-
-}
+import json
+from pprint import pprint
+from netmiko import ConnectHandler
+from dotenv import dotenv_values
+from colorama import init, Fore, Back, Style
 
 
-# Connect and Execute Command
-for device in devices:
-    try:
-        net_connect = ConnectHandler(**device)
-        print('\n')
-        print(f'Host {device['host']}')
-        for commands in templates['check']:
-            output = net_connect.send_command(commands)
-            regex_ver7 = r'upgrade-firmware: (7\..+)'
-            regex_ver6 = r'upgrade-firmware: (6\..+)'
-            if  re.findall(regex_ver7,output):
-                print('Version 7')
-                for commands in templates['V7']['clean_config']:
-                    print(f"X  Deleting Config: '{commands}'")
-                    output = net_connect.send_command(commands,read_timeout=40)
-                for commands in templates['V7']['post_config']:
-                    print(f"✓  Reconfig: '{commands}'")
-                    output = net_connect.send_command(commands,read_timeout=40)   
-            elif re.findall(regex_ver6,output):
-                    print('Version 6')
-                    for commands in templates['V6']['post_config']:
-                        print(f"✓  Reconfig: '{commands}'")
-                        output = net_connect.send_command(commands,read_timeout=40) 
+# Get File .env
+config = dotenv_values(".env")
+var_env = dict(config)
+
+
+class ValidatorOfFilesJSON():
+    global valid_keys
+    valid_keys = ['router','description','execution_commands']
+
+    def validate_keys(file):
+        try:
+            keys_in_json = dict(file).keys()
+            for a in keys_in_json:
+                if a in valid_keys:
+                    continue
+                else:
+                    print('Only allowed this keys in json file', valid_keys)
+                    return False    
+            return file
+        except Exception as e:
+            print('Error')
+
+    def validate_value_of_keys(file):
+        for a in file:
+            pointer_value = file.get(a)
+            if isinstance(pointer_value,str) or isinstance(pointer_value,dict) :
+                continue
+            elif len(pointer_value) > 0:
+                continue
             else:
-                print(output)
-    except ConnectionRefusedError as err:
-        print(f"Connection Refused: {err}")
-    except TimeoutError as err:
-        print(f"Connection Refused: {err}")
-    except Exception as err:
-        exception_type = type(err).__name__
-        print(exception_type)
-        
+                print('Data Invalid')
 
-    # Close All connections to Routers
-    net_connect.disconnect()
+class HandleFiles:
+    """
+    Open, edit or create new Files JSON
+    EX : HandleFiles('./templates/template.json').AnyMethod()
+    """
+    def open_json_files(fileJson):
+        #Open A File JSON -> EX: HandleFiles(PATH-TO-FILE.json).open_json_files()
 
+        try:
+            # Validate Exist File and PATH
+            if len(fileJson) > 0 and os.path.exists(fileJson):
+                with open(fileJson, "r") as datas:
+                    data  = json.load(datas)
+                    #pprint(data)
+                return data
+            else:
+                raise FileNotFoundError
+        except FileNotFoundError:
+            print('Require PATH and file json')
+
+    def open_txt_files(fileTxt):
+        try:
+            # Validate Exist File and PATH
+            if len(fileTxt) > 0 and os.path.exists(fileTxt):
+                with open(fileTxt, "r") as datas:
+                    hosts = []
+                    for a in datas:
+                        host = a.strip("\n")
+                        hosts.append(host)
+                return hosts
+            else:
+                raise FileNotFoundError
+        except FileNotFoundError:
+            print('Require PATH and file json')
+
+class RouterMikrotik():
+    def __init__(self,host,template,user,passwd):
+        self.host = host
+        self.template = template
+        self.user = user
+        self.passwd = passwd
+    
+    def connectSsh(self):
+        try:        
+            version7_regexp = r'^7\.\d+\.\d+$'
+            version6_regexp = r'^6\.\d+\.\d+$'
+
+            hosts = HandleFiles.open_txt_files(self.host)
+            devices = [{
+            'device_type': 'mikrotik_routeros',
+            'host': ips,
+            'username':self.user,
+            'password':self.passwd,
+            }
+                for ips in hosts
+            ]
+
+            for device in devices:
+                version = self.template['execution_commands']['first-check-version']
+                net_connect = ConnectHandler(**device)
+                output = net_connect.send_command(version,use_textfsm=True,read_timeout=20.5)
+                
+                # Get Current Firmware
+                current_firmware = output[0]['current_firmware']
+                
+                # IF V7
+                if re.match(version6_regexp,current_firmware):
+                    for x in self.template['execution_commands']['then-if-router-v6']:
+                        output = net_connect.send_command(str(x),read_timeout=20.5)
+                    print(Fore.GREEN + Style.BRIGHT + f"Completed 💚 - IP: {device['host']}  Version: {current_firmware}")
+                    Style.RESET_ALL
+
+                #IF V6
+                elif re.match(version7_regexp,current_firmware):
+                    for x in self.template['execution_commands']['then-if-router-v7']:
+                        output = net_connect.send_command(str(x),read_timeout=20.5)
+                    print(Fore.GREEN + Style.BRIGHT + f"Completed 💚 - IP: {device['host']}  Version: {current_firmware}")
+                else:
+                    print(Fore.RED + Style.BRIGHT + f"Version Unknown: {current_firmware}  IP: {device['host']}")
+
+        except Exception as e:
+            print(Fore.RED + Style.BRIGHT + f"Error on IP: {device['host']}  Version:{current_firmware}")
+
+
+jsonfile = HandleFiles.open_json_files('./templates/ntp-reconfig.template.json')
+ValidatorOfFilesJSON.validate_keys(jsonfile)
+ValidatorOfFilesJSON.validate_value_of_keys(jsonfile)
+RouterMikrotik('./hosts.txt',jsonfile,var_env['USER_MK'],var_env['PASS_MK']).connectSsh()

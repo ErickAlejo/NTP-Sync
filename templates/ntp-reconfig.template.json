@@ -1,0 +1,16 @@
+{
+    "router": "Mikrotik",
+    "description": "Template To Change NTP and Clock Config via Template",
+    "execution_commands":{
+        "first-check-version": "/system routerboard print",
+        "then-if-router-v6":[
+                "/system ntp client set primary-ntp=172.16.1.122 secondary-ntp=10.0.2.9 ", 
+                "/system clock set time-zone-name=America/Bogota"], 
+        "then-if-router-v7":[
+                "/system/ntp/client/servers remove [find]",
+                "/system clock set time-zone-name=America/Bogota",
+                "/system ntp client set enabled=yes",
+                "/system ntp client servers add address=10.0.2.9",
+                "/system ntp client servers add address=172.16.1.122"]
+    }
+}
