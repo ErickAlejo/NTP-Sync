@@ -1,26 +1,30 @@
-# Que hace este script
+# NTP-Sync
+## Description
+Script en Python para dispositivos y routers Mikrotik, cambiar configuracion de NTP/Clock para cientos o miles de routers. 
 
-Le pasas un listado de IPs al archivo hosts.txt y lo ejecutas, este deberá configurar el NTP y el apartado Clock en cada uno de los routers que esten en el archivo hosts.txt. **Principalmente esta pensado para ser usado en routers Mikrotik V7,V6.**
+## Como ejecutar
+Paso #1
 
-# Que comandos ejecuta en mis Routers Mikrotik
+- ```pip3 install -r requirements.txt```
 
-**Comandos V6, que ejecutará**
-- "/system ntp client set primary-ntp=10.0.2.9 secondary-ntp=172.16.1.122"
-- "/system clock set time-zone-name=America/Bogota" 
+- Coloca tus IPS en el archivo hosts.txt (una ip por linea)
 
-**Comandos V7, que ejecutará**
-- "/system/ntp/client/servers remove [find]"
-- "/system clock set time-zone-name=America/Bogota"
-- "/system ntp client set enabled=yes",
-- "/system ntp client servers add address=X.X.X.X",
-- "/system ntp client servers add address=X.X.X.X"
+Paso #2
 
-# Como lo uso
+- Abre el archivo template.json de la carpeta './templates' y reemplaza X.X.X.X por las ip de tu servidor NTP (coloca dos IPs distintas)
+- Abre el archivo .env (sino lo ves en tu carpeta pulsa CTRL + H para ver el archivo oculto) alli modifica el usuario y contraseña por las de tus routers.
 
-Coloca tus IPs en el archivo "hosts.txt" debe haber una IP por linea y si el archivo no existe crealo con ese mismo nombre. Por ultimo ejecuta python main.py y el resto lo  hará el script
 
-```sh
-touch hosts.txt # Coloca tus IPs en este archivo
-python3 main.py
-# Happy Hacking
-```
+Paso #3
+- ``` ✨ Ejecuta ✨ ``` 
+- ```Python3 main.py```
+ 
+
+### Pruebalo 
+
+| Caracteristicas |
+| ------ |
+| Soporte Tecnico | 
+| Detecta V7 y V6 en Mikrotik | 
+| Comandos Personalizados | 
+| Agrega Features comodamente |
