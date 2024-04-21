@@ -1,9 +1,9 @@
 # NTP-Sync
 ![Logo NTP-Sync](https://i.imgur.com/DeQY0Cx.png)
 ## Descripción
-Script en Python para dispositivos y routers Mikrotik, cambiar configuracion de NTP/Clock para cientos o miles de routers. 
+Configura el NTP/Clock para tus equipos Mikrotik a través de este script en Python 
 
-## ¿Como ejecutar?
+## Como ejecutar
 
 **Paso #1**
 - ```pip3 install -r requirements.txt```
@@ -25,3 +25,4 @@ Script en Python para dispositivos y routers Mikrotik, cambiar configuracion de 
 | Detecta V7 y V6 en Mikrotik | 
 | Comandos Personalizados | 
 | Escalable via template JSON |
+| Escribeme a través de: erickgraterolbarico@gmail.com|
