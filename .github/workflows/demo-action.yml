@@ -16,9 +16,7 @@ jobs:
         install -m 600 -D /dev/null ~/.ssh/id_rsa
         echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
         chmod 600 ~/.ssh/id_rsa
-        ls -la ~/.ssh
-        ssh-keyscan ${{ secrets.SSH_HOST }} > ~/.ssh/known_hosts 2> log.txt
-        cat log.txt
+        ssh-keyscan ${{ secrets.SSH_HOST }} > ~/.ssh/known_hosts
 
     - name: connect and pull
       run: |
