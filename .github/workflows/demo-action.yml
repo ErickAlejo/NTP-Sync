@@ -10,14 +10,6 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    - name: Setup ssh key
-      run: |
-        mkdir -p ~/.ssh
-        install -m 600 -D /dev/null ~/.ssh/id_rsa
-        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-        chmod 600 ~/.ssh/id_rsa
-        ssh-keyscan -v ${{ secrets.SSH_HOST }} > ~/.ssh/known_hosts
-
     - name: connect and pull
       run: |
         ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} -v
